@@ -679,30 +679,6 @@ def getValidateLoginHint(login_hint):
 def percentage(part, whole):
   return '{0:.2f}'.format(100 * float(part)/float(whole))
 
-def shorten_url(long_url):
-  simplehttp = _createHttpObj(timeout=10)
-  url_shortnr = 'https://gyb-shortn.jaylee.us/create'
-  headers = {'Content-Type': 'application/json',
-             'User-Agent': getGYBVersion(' | ')}
-  try:
-    resp, content = simplehttp.request(url_shortnr, 'POST',
-            f'{{"long_url": "{long_url}"}}', headers=headers)
-  except Exception as e:
-    return long_url
-  if resp.status != 200:
-    return long_url
-  try:
-    return json.loads(content).get('short_url', long_url)
-  except Exception as e:
-    print(content)
-    return long_url
-
-class ShortURLFlow(google_auth_oauthlib.flow.InstalledAppFlow):
-  def authorization_url(self, **kwargs):
-    long_url, state = super(ShortURLFlow, self).authorization_url(**kwargs)
-    short_url = shorten_url(long_url)
-    return short_url, state
-
 MESSAGE_CONSOLE_AUTHORIZATION_PROMPT = '\nGo to the following link in your browser:\n\n\t{url}\n'
 MESSAGE_CONSOLE_AUTHORIZATION_CODE = 'Enter verification code: '
 MESSAGE_LOCAL_SERVER_AUTHORIZATION_PROMPT = '\nYour browser has been opened to visit:\n\n\t{url}\n\nIf your browser is on a different machine then press CTRL+C and delete the oauthbrowser.txt file in the same folder as GYB.\n'
@@ -716,7 +692,7 @@ def _run_oauth_flow(client_id, client_secret, scopes, access_type, login_hint=No
       'token_uri': 'https://oauth2.googleapis.com/token',
       }
     }
-  flow = ShortURLFlow.from_client_config(client_config, scopes, autogenerate_code_verifier=True)
+  flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_config(client_config, scopes, autogenerate_code_verifier=True)
   kwargs = {'access_type': access_type}
   if login_hint:
     kwargs['login_hint'] = login_hint
